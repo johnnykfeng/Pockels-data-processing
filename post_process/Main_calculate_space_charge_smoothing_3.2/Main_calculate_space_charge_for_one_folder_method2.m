@@ -22,17 +22,17 @@
 clear
 load 'P.txt'
 % P=load('P_test.txt')
-Version= '3.2';
-Psize=size(P);
-N=Psize(1);
-rho_dark_all=NaN(N,1);
-rho_Xray_all=NaN(N,1);
-rho_net_all=NaN(N,1);
-mu_tau_h_all=NaN(N,1);
+Version = '3.2';
+Psize = size(P);
+N = Psize(1);
+rho_dark_all = NaN(N,1);
+rho_Xray_all = NaN(N,1);
+rho_net_all = NaN(N,1);
+mu_tau_h_all = NaN(N,1);
 % mu_tau_h_all2=NaN(N,1);
-Bias=num2str(P(1,1));
-Current=num2str(P(1,2));
-string1=['*' Bias 'V_' Current 'mA' '*output.mat'];
+Bias = num2str(P(1,1));
+Current = num2str(P(1,2));
+string1 = ['*' Bias 'V_' Current 'mA' '*output.mat'];
 S = dir(fullfile(string1));
 if size(S)>1
     fprintf(2,'Warning:there are more than 1 data set with the same bias and current');
@@ -41,13 +41,13 @@ end
 load(S.name);
 sensor_name=Output.sensor_name;
 
-for i=1:N
+for i = 1:N
     if P(i,2)>0
         [rho_net,rho_net_mean,rho_dark, rho_Xray,mu_tau_h,xx]=Func_space_charge_profiles(P(i,1),P(i,2));
-        rho_dark_all(i)=mean(rho_dark(20:end-20));
-        if i-1>0
-            if P(i-1,2)==0
-                rho_dark_all(i-1)=mean(rho_dark(20:end-20));
+        rho_dark_all(i) = mean(rho_dark(20:end-20));
+        if i-1 > 0
+            if P(i-1,2) == 0
+                rho_dark_all(i-1) = mean(rho_dark(20:end-20));
             end
         end
         rho_Xray_all(i)=mean(rho_Xray(20:end-20));
