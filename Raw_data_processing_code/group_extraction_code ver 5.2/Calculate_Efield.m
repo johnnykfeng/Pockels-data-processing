@@ -25,9 +25,9 @@ E_neg=-(1/Calib.alpha) * (asin(sqrt(abs(I_neg))));
 E_biased_raw=E_pos+E_neg;
 % image distortion correction 2023-01-03
 if isfield(Calib,'cathode')
-    [E_biased_corrected,Edge_cathode_fit,Edge_anode_fit]=Func_distortion_correction(Calib,E_biased_raw);
+    [E_biased_corrected, Edge_cathode_fit, Edge_anode_fit]=Func_distortion_correction(Calib, E_biased_raw);
 else
-    E_biased_corrected=E_biased_raw;
+    E_biased_corrected = E_biased_raw;
 end
 
 %----------
@@ -135,9 +135,13 @@ end
 X_standard=(round(e1)-delta_x):(round(e2)+delta_x);
 
 for i=1:M
-    di=Edge_anode_fit(i)-Edge_cathode_fit(i);
-    x0=0:di+2*delta_x;
-    y0=image(i,(Edge_cathode_fit(i)-delta_x):(Edge_anode_fit(i)+delta_x));
+    di = Edge_anode_fit(i)-Edge_cathode_fit(i);
+    x0 = 0:di+2*delta_x;
+    cathode_edge = (Edge_cathode_fit(i) - delta_x); %#ok<NOPRT>
+    anode_edge = (Edge_anode_fit(i) + delta_x); %#ok<NOPRT>
+    % y0=image(i, (Edge_cathode_fit(i)-delta_x):(Edge_anode_fit(i) + delta_x));
+    y0 = image(i, cathode_edge:anode_edge);
+
     x1=(1:length(X_standard))/length(X_standard)*(d+2*delta_x);
     y1=interp1(x0,y0,x1);
     image_corrected(i,X_standard(1):X_standard(end))=y1;

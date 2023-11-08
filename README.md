@@ -1,2 +1,5 @@
-# Initial README
+## How the code works
+
+Main
+
 

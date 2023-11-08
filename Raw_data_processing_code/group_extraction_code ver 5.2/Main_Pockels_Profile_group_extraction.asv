@@ -48,8 +48,8 @@ Z_sensor = str2num(N_char);
 waitfor(msgbox('Please prepare a table with the first column of "Bias" and the second of "X-ray tube current" (enter 0 if no X-ray) saved as "P.txt"'));
 waitfor(msgbox('Select the "P.txt" file'));
 [file_biased_crossed, path_biased_crossed] = uigetfile('*.txt'); % Reads the "P.txt" file
-filename = [path_biased_crossed, file_biased_crossed];
-parameter = importdata(filename);
+filename = [path_biased_crossed, file_biased_crossed]
+parameter = importdata(filename)
 
 %%
 % These coordinates only make sense on a large 1920 x 1080 screen
@@ -68,7 +68,7 @@ f4 = figure('Name', 'Pockels Image Data');
 
 %% Calibration
 % read calibration_ini, it's does a lot of things
-[Output, Calib, calib_status]=calibration_ini(parameter,sensor_name, Z_sensor);
+[Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, Z_sensor);
 %% process raw data of each measurement condition
 
 Integral_Efield_all=zeros(N,1);
@@ -81,13 +81,13 @@ for i=1:N
     %%%%% Calculates the E-field
     [Output, Calib]=Calculate_Efield(Output, Calib);
 
-    figure(1)
+    figure(f1)
     plot(Calib.x_all-Calib.x_all(Calib.cathode),Output.E_cross_section_average_corrected,'displayname',[bias_string 'V,' flux_string 'mA']);
     title(['Pockels average profile sensor-' Output.sensor_name '@' bias_string 'V,' flux_string 'mA'])
     xlabel('Cathode to anode distance (mm)')
     ylabel('E field (V/m)')
 
-    figure(2)
+    figure(f2)
     title(['Pockels average profile sensor-' Output.sensor_name])
     xlabel('Cathode to anode distance (mm)')
     ylabel('E field (100V/mm)')
@@ -98,7 +98,7 @@ for i=1:N
     Integral_Efield_all(i) = Output.integral_Efield;
     %     end
 
-    figure(4)
+    figure(f4)
     imagesc(Output.E_field_biased_corrected)
     E_ave=parameter(i,1)/Z_sensor*1E3;
     E_max=E_ave*1.7;
@@ -113,12 +113,12 @@ for i=1:N
     box
     
     if Output.flux > 0 % for non dark current
-        figure(2)
+        figure(f2)
         plot(Calib.x_all-Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected*1e-5, ...
             'displayname',[bias_string 'V,' flux_string 'mA']);
         box
 
-        figure(3)
+        figure(f3)
         % plot with circles 'o'
         plot(Output.bias, Output.integral_Efield, ...
             'o','displayname',[bias_string 'V,' flux_string 'mA']);
@@ -128,13 +128,13 @@ for i=1:N
         box
 
     else  % Dark current plots
-        figure(2)
+        figure(f2)
         % plot dark current with '--'
         plot(Calib.x_all-Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected*1e-5, ...
             '--', 'displayname', [bias_string 'V,' flux_string 'mA']);
         box
 
-        figure(3)
+        figure(f3)
         % plot with squares 's'
         plot(Output.bias, Output.integral_Efield, ...
             's','displayname',[bias_string 'V,' flux_string 'mA']);
@@ -151,7 +151,7 @@ for i=1:N
     Output.thickness = Z_sensor;
     Dir = path_biased_crossed;
     save([Dir '\' Output.sensor_name '_' bias_string 'V_' flux_string 'mA_Pockels_output.mat'], 'Output');
-    figure(4)
+    figure(f4)
     savefig([Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_uncorrected'])
     saveas(gcf,[Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_uncorrected'], 'png')
     if strcmp(calib_status,'No')
@@ -181,17 +181,17 @@ save([Dir '\' Output.sensor_name '_integral_E_field.mat'], 'Integral_Efield_all'
 
 %% --------------------------------------
 
-figure(2)
+figure(f2)
 savefig([Output.sensor_name '_all_E_field_profiles'])
 saveas(gcf,[Output.sensor_name '_all_E_field_profiles'], 'png')
-figure(3)
+figure(f3)
 savefig([Output.sensor_name '_Integral_E_field_vs_bias'])
 saveas(gcf,[Output.sensor_name '_Integral_E_field_vs_bias'], 'png')
-figure(1)
+figure(f1)
 hold off
-figure(2)
+figure(f2)
 hold off
-figure(3)
+figure(f3)
 hold off
 if abs(deviation)>0.3
     waitfor(msgbox(['Process is complete. The integral of E-field poorly matches bias, a better calibration may be needed']));

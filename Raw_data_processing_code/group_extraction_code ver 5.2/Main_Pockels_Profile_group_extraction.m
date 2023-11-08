@@ -51,6 +51,11 @@ waitfor(msgbox('Select the "P.txt" file'));
 filename = [path_biased_crossed, file_biased_crossed];
 parameter = importdata(filename);
 
+disp(filename)
+disp(class(filename))
+disp(parameter)
+disp(class(parameter))
+
 %%
 % These coordinates only make sense on a large 1920 x 1080 screen
 f1 = figure('Name', 'Pockels average E-field profile per data');
@@ -61,25 +66,26 @@ plot([0, 1000], [0, 1000], 'k--')
 hold on
 f4 = figure('Name', 'Pockels Image Data');
 
-% movegui(f1, [40, 575]);
-% movegui(f2, [612, 575]);
-% movegui(f3, [40, 66]);
-% movegui(f4, [612, 66]);
+movegui(f1, [40, 575]);
+movegui(f2, [612, 575]);
+movegui(f3, [40, 66]);
+movegui(f4, [612, 66]);
 
 %% Calibration
 % read calibration_ini, it's does a lot of things
-[Output, Calib, calib_status]=calibration_ini(parameter,sensor_name, Z_sensor);
+[Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, Z_sensor);
 %% process raw data of each measurement condition
 
 Integral_Efield_all=zeros(N,1);
 for i=1:N
     bias_string=num2str(parameter(i,1));
-    flux_string=num2str(parameter(i,2));
+    flux_string=num2str(parameter(i, ...
+        2));
 
     %%%%% Read the raw measurement data
-    [Output]=Read_Pockels_data_group_extraction(sensor_name,parameter(i,1),parameter(i,2));
+    [Output] = Read_Pockels_data_group_extraction(sensor_name, parameter(i,1),parameter(i,2));
     %%%%% Calculates the E-field
-    [Output, Calib]=Calculate_Efield(Output, Calib);
+    [Output, Calib] = Calculate_Efield(Output, Calib);
 
     figure(f1)
     plot(Calib.x_all-Calib.x_all(Calib.cathode),Output.E_cross_section_average_corrected,'displayname',[bias_string 'V,' flux_string 'mA']);
