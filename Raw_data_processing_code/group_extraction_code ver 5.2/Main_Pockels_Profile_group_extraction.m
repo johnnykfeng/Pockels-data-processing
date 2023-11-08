@@ -204,6 +204,7 @@ if abs(deviation)>0.3
 else
 waitfor(msgbox(['Process is complete']));
 end
+
 clearvars -except Output f1 f2 f3 f4 Calib slope
 
 %% Revision history
