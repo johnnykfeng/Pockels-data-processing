@@ -1,5 +1,17 @@
-function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, Z_sensor)
-    % Calibration data initialization
+function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, sensor_thickness)
+    %% DOCSTRING
+    % Routine for calibration step of Pockels data analysis
+    % 
+    % Inputs:
+    %   - parameter: 2 x N array of bias and x-ray currents used for measurements
+    %   - sensor_name: user input sensor name
+    %   - sensor_thickness: user input sensor thickness in mm
+    % 
+    % Outputs:
+    %   - Output: struct containing the extracted data
+    %   - Calib: struct containing variables for calibration
+    %   - calib_status: boolean input for using pre-existing calibration
+    % 
     calib_status = questdlg('Do you want to use existing calibration file?');
 
     if strcmp(calib_status, 'Yes')
@@ -107,7 +119,7 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             colorbar
             box
 
-            E = Output.E_field_biased_corrected;
+            E_field_biased_corrected = Output.E_field_biased_corrected;
             I0 = Calib.I_parallel_nobias_field;
             %% roughly select a region in 0V parallel image to remove obvious regions with light other than the sensor
             % added on 2022/03/11 by Yuxin
@@ -128,14 +140,16 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             imagesc(I0)
             I0(:, 1:region_left) = I0_background;
             imagesc(I0)
+
             %%
-            dimension = size(E);
+            dimension = size(E_field_biased_corrected);
             N0 = dimension(1);
             L = dimension(2);
             %-----find threshold for judging signal
             I0_center = I0(round(N0 / 2), :);
             I0_center_smooth = movmean(I0_center, 20);
             thre = 1/4 * max(I0_center_smooth);
+
             %--------------------------------------
             % find edge
             for i = 1:N0
@@ -161,12 +175,12 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             Edge_right_median = round(median(Edge_right));
             T = Edge_right - Edge_left; % thickness of sensor in unite of pixel
             T_median = median(T);
-            Calib.scale = Z_sensor / T_median; %[mm/pixel] the corresponding thickness of one pixel
+            Calib.scale = sensor_thickness / T_median; %[mm/pixel] the corresponding thickness of one pixel
             outlier = find((abs(T - T_median) / T_median > 0.2) == 1);
 
             for i = 1:N0
-                Eline = E(i, Edge_left(i):Edge_right(i));
-                x = (0:T(i)) / T(i) * Z_sensor * 1E-3;
+                Eline = E_field_biased_corrected(i, Edge_left(i):Edge_right(i));
+                x = (0:T(i)) / T(i) * sensor_thickness * 1E-3;
                 E_int(i) = trapz(x, Eline);
             end
 
@@ -200,12 +214,12 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             T_sel = Edge_right_sel - Edge_left_sel; % thickness of sensor in unite of pixel
             T_sel_median = median(T_sel);
 
-            xs = (0:(Edge_right_sel_median - Edge_left_sel_median)) / T_sel_median * Z_sensor * 1E-3; %[m]
+            xs = (0:(Edge_right_sel_median - Edge_left_sel_median)) / T_sel_median * sensor_thickness * 1E-3; %[m]
             E_integral_selected = trapz(xs, E_profile_selected(Edge_left_sel_median:Edge_right_sel_median)); %integral of E-field in the seleteced region
             Output.integral_Efield = E_integral_selected;
 
             x_all = [1:L] * (xs(2) - xs(1)) * 1e3; %[mm]
-            Calib.x_sensor = (0:(Edge_right_median - Edge_left_median)) / T_sel_median * Z_sensor; %[mm]
+            Calib.x_sensor = (0:(Edge_right_median - Edge_left_median)) / T_sel_median * sensor_thickness; %[mm]
             Calib.x_all = x_all; %[mm]
             %         Calib.xs=xs;
             %% adjusts the alpha parameter to match the integral E-field with bias applied
@@ -230,7 +244,7 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             plot(Calib.x_all, E_profile_selected, 'displayname', 'selected')
             legend
             y = Output.E_cross_section_average_corrected(round(Calib.cathode):round(Calib.anode));
-            xs2 = (0:(Edge_right_median - Edge_left_median)) / T_median * Z_sensor;
+            xs2 = (0:(Edge_right_median - Edge_left_median)) / T_median * sensor_thickness;
             Output.integral_Efield = trapz(xs2, y);
             int_E_all = num2str(Output.integral_Efield);
             int_E_selected = num2str(E_integral_selected);

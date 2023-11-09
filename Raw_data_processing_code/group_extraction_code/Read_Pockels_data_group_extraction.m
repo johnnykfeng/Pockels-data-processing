@@ -1,5 +1,5 @@
 function [Output] = Read_Pockels_data_group_extraction(sensor_name, bias, X_ray_tube_current)
-    %% 
+    %% DOCSTRING
     % Read_Pockels_data_group_extraction reads Pockels data from *.txt file based on filename
     % then extracts the pixel values as an array size [696, 520, 1]
     % 

@@ -28,13 +28,13 @@
 % the workspace.
 %-------------------------------------------------------------------------
 %%
-
+warning('off','all') % not recommended
 clear
 close all
 prompt = {'Enter sensor name', 'Number of conditions to be extracted', 'Sensor thickness [mm]'};
 dlgtitle = 'Test information ';
 % Other inputs:
-% Z_sensor = 2; %[mm] thickness of sensor. Default is 2mm
+% sensor_thickness = 2; %[mm] thickness of sensor. Default is 2mm
 version = '5.2';
 % Dimensions for the input dialog box
 dims = [1, 35];
@@ -43,7 +43,7 @@ sensor_name = char(answer{1});
 N_char = answer{2};
 N = str2num(N_char);
 N_char = answer{3};
-Z_sensor = str2num(N_char);
+sensor_thickness = str2num(N_char);
 
 waitfor(msgbox('Please prepare a table with the first column of "Bias" and the second of "X-ray tube current" (enter 0 if no X-ray) saved as "P.txt"'));
 waitfor(msgbox('Select the "P.txt" file'));
@@ -51,10 +51,9 @@ waitfor(msgbox('Select the "P.txt" file'));
 filename = [path_biased_crossed, file_biased_crossed];
 parameter = importdata(filename);
 
-disp(filename)
-disp(class(filename))
+disp("Parameter file")
+disp("Bias(V)  X-ray(mA)")
 disp(parameter)
-disp(class(parameter))
 
 %%
 % These coordinates only make sense on a large 1920 x 1080 screen
@@ -73,7 +72,7 @@ movegui(f4, [612, 66]);
 
 %% Calibration
 % read calibration_ini, it's does a lot of things
-[Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, Z_sensor);
+[Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, sensor_thickness);
 %% process raw data of each measurement condition
 
 Integral_Efield_all=zeros(N,1);
@@ -106,7 +105,7 @@ for i=1:N
 
     figure(f4)
     imagesc(Output.E_field_biased_corrected)
-    E_ave=parameter(i,1)/Z_sensor*1E3;
+    E_ave=parameter(i,1)/sensor_thickness*1E3;
     E_max=E_ave*1.7;
     clim([0,E_max])
     title(['Corrected E-field for sensor-' Output.sensor_name ' @ ' bias_string 'V, ' flux_string 'mA'])
@@ -154,7 +153,7 @@ for i=1:N
     %--------------
     Output.version = version;
     %--------------
-    Output.thickness = Z_sensor;
+    Output.thickness = sensor_thickness;
     Dir = path_biased_crossed;
     save([Dir '\' Output.sensor_name '_' bias_string 'V_' flux_string 'mA_Pockels_output.mat'], 'Output');
     figure(f4)
@@ -205,7 +204,7 @@ else
 waitfor(msgbox(['Process is complete']));
 end
 
-clearvars -except Output f1 f2 f3 f4 Calib slope
+% clearvars -except Output f1 f2 f3 f4 Calib slope parameter
 
 %% Revision history
 %2023-08-23 Version 5.2 by Yuxin. Corrected the parameters in the Pockels equation and the calculation of r41, in calibration_ini.m 
