@@ -25,88 +25,99 @@ load 'P.txt'
 Version = '3.2';
 Psize = size(P);
 N = Psize(1);
-rho_dark_all = NaN(N,1);
-rho_Xray_all = NaN(N,1);
-rho_net_all = NaN(N,1);
-mu_tau_h_all = NaN(N,1);
+rho_dark_all = NaN(N, 1);
+rho_Xray_all = NaN(N, 1);
+rho_net_all = NaN(N, 1);
+mu_tau_h_all = NaN(N, 1);
 % mu_tau_h_all2=NaN(N,1);
-Bias = num2str(P(1,1));
-Current = num2str(P(1,2));
+Bias = num2str(P(1, 1));
+Current = num2str(P(1, 2));
 string1 = ['*_' Bias 'V_' Current 'mA' '*output.mat'];
 S = dir(fullfile(string1));
-if size(S)>1
-    fprintf(2,'Warning:there are more than 1 data set with the same bias and current');
+
+if size(S) > 1
+    fprintf(2, 'Warning:there are more than 1 data set with the same bias and current');
 end
 
 load(S.name);
-sensor_name=Output.sensor_name;
+sensor_name = Output.sensor_name;
 
 for i = 1:N
-    if P(i,2)>0
-        [rho_net,rho_net_mean,rho_dark, rho_Xray,mu_tau_h,xx]=Func_space_charge_profiles(P(i,1),P(i,2));
-        rho_dark_all(i) = mean(rho_dark(20:end-20));
-        if i-1 > 0
-            if P(i-1,2) == 0
-                rho_dark_all(i-1) = mean(rho_dark(20:end-20));
+
+    if P(i, 2) > 0
+        [rho_net, rho_net_mean, rho_dark, rho_Xray, mu_tau_h, xx] = Func_space_charge_profiles(P(i, 1), P(i, 2));
+        rho_dark_all(i) = mean(rho_dark(20:end - 20));
+
+        if i - 1 > 0
+
+            if P(i - 1, 2) == 0
+                rho_dark_all(i - 1) = mean(rho_dark(20:end - 20));
             end
+
         end
-        rho_Xray_all(i)=mean(rho_Xray(20:end-20));
-        rho_net_all(i)=mean(rho_net(20:end-20));
-        mu_tau_h_all(i)=mu_tau_h;
+
+        rho_Xray_all(i) = mean(rho_Xray(20:end - 20));
+        rho_net_all(i) = mean(rho_net(20:end - 20));
+        mu_tau_h_all(i) = mu_tau_h;
         %         mu_tau_h_all2(i)=mu_tau_h2;
     else
-        bias_str=num2str(P(i,1));
-        string2=['*_' bias_str 'V_0mA' '*.mat'];
+        bias_str = num2str(P(i, 1));
+        string2 = ['*_' bias_str 'V_0mA' '*.mat'];
         S = dir(fullfile(string2));
         % load(S.name);
         load(S(1).name);
-        Output_dark=Output;
+        Output_dark = Output;
 
-        string3=['*calib*.mat'];
+        string3 = ['*calib*.mat'];
         S = dir(fullfile(string3));
         load(S.name);
 
-        [rho_dark,xx_dark]=Func_space_charge_line_profile(Output_dark,Calib);%[e/cm^3]
-        rho_dark_all(i)=mean(rho_dark(20:end-20));
+        [rho_dark, xx_dark] = Func_space_charge_line_profile(Output_dark, Calib); %[e/cm^3]
+        rho_dark_all(i) = mean(rho_dark(20:end - 20));
 
-        f93=figure(93);
+        f93 = figure(93);
         clf(f93)
-        movegui(f93,[1184 575]);%movegui(f1,[40 903]);
+        movegui(f93, [1184 575]); %movegui(f1,[40 903]);
         % xx=Calib.x_sensor(1:end-1);
-        plot(xx_dark(1:end-1),rho_dark,'b','displayname','dark')
+        plot(xx_dark(1:end - 1), rho_dark, 'b', 'displayname', 'dark')
         hold on
         ylim([-1.5E11 1.5E11])
-        zeromark=zeros(1,length(xx_dark)-1);
-        plot(xx_dark(1:end-1),zeromark,'--k','displayname','zero charge')
+        zeromark = zeros(1, length(xx_dark) - 1);
+        plot(xx_dark(1:end - 1), zeromark, '--k', 'displayname', 'zero charge')
 
-        xlabel('position [mm]')
+        xlabel('anode-cathode distance [mm]')
         ylabel('Space charge [e/cm^3]')
         legend
-        title(['Space charge profiles-' Output_dark.sensor_name '-' bias_str 'V, 0mA'])
+        title(['Space charge profiles -' Output_dark.sensor_name ' - ' bias_str 'V, 0mA'])
         grid
         box
         hold off
         savefig([Output_dark.sensor_name '_' bias_str 'V_0mA_Space_Charge_profiles'])
-        filename=[Output_dark.sensor_name '_' bias_str 'V_0mA' '_Space_charge.mat'];
-        save(filename,'rho_dark')
+        filename = [Output_dark.sensor_name '_' bias_str 'V_0mA' '_Space_charge.mat'];
+        save(filename, 'rho_dark')
     end
+
 end
 
 %% plot figures
 % mu.tau-h vs bias
-N_currents=unique(P(:,2));
-N_bias=unique(P(:,1));
+N_currents = unique(P(:, 2));
+N_bias = unique(P(:, 1));
 fig = figure;
 hold on
-for i=1:length(N_bias)
-    for j=1:length(N_currents)
-        bias_axis_add(j)=(j-2)*10;
+
+for i = 1:length(N_bias)
+
+    for j = 1:length(N_currents)
+        bias_axis_add(j) = (j - 2) * 10;
         %         biasStr=num2str(N_bias(i));
         %         currentStr=num2str(N_currents(j));
     end
-    bias_axis=ones(length(N_currents),1)*N_bias(i)+bias_axis_add';
-    plot(bias_axis,mu_tau_h_all((i-1)*length(N_currents)+1:(i-1)*length(N_currents)+length(N_currents)),'-o');%,'DisplayName',currentStr)
+
+    bias_axis = ones(length(N_currents), 1) * N_bias(i) + bias_axis_add';
+    plot(bias_axis, mu_tau_h_all((i - 1) * length(N_currents) + 1:(i - 1) * length(N_currents) + length(N_currents)), '-o'); %,'DisplayName', currentStr)
 end
+
 xlabel('bias [V] (+ tube current [5,15,25 mA])')
 ylabel('mu.tau h [cm^2/V]')
 box
@@ -114,30 +125,34 @@ grid
 title(['mu.tau h vs bias:' sensor_name])
 set(gca, 'YScale', 'log')
 savefig([sensor_name '_mu.tau h vs bias.fig'])
-saveas(gcf,[Output.sensor_name '_mu.tau h vs bias'], 'png')
+saveas(gcf, [Output.sensor_name '_mu.tau h vs bias'], 'png')
 
 % space charge vs bias
-N_currents=unique(P(:,2));
-N_bias=unique(P(:,1));
+N_currents = unique(P(:, 2));
+N_bias = unique(P(:, 1));
 fig = figure;
 hold on
-for i=1:length(N_bias)
-    for j=1:length(N_currents)
-        bias_axis_add(j)=(j-2)*10;
+
+for i = 1:length(N_bias)
+
+    for j = 1:length(N_currents)
+        bias_axis_add(j) = (j - 2) * 10;
         %         biasStr=num2str(N_bias(i));
         %         currentStr=num2str(N_currents(j));
     end
-    bias_axis=ones(length(N_currents),1)*N_bias(i)+bias_axis_add';
-    plot(bias_axis,rho_dark_all((i-1)*length(N_currents)+1:(i-1)*length(N_currents)+length(N_currents)),'-bo','DisplayName','dark');
-    plot(bias_axis,rho_Xray_all((i-1)*length(N_currents)+1:(i-1)*length(N_currents)+length(N_currents)),'-rs','DisplayName','Xray');
-    plot(bias_axis,rho_net_all((i-1)*length(N_currents)+1:(i-1)*length(N_currents)+length(N_currents)),'-g*','DisplayName','net');
+
+    bias_axis = ones(length(N_currents), 1) * N_bias(i) + bias_axis_add';
+    plot(bias_axis, rho_dark_all((i - 1) * length(N_currents) + 1:(i - 1) * length(N_currents) + length(N_currents)), '-bo', 'DisplayName', 'dark');
+    plot(bias_axis, rho_Xray_all((i - 1) * length(N_currents) + 1:(i - 1) * length(N_currents) + length(N_currents)), '-rs', 'DisplayName', 'Xray');
+    plot(bias_axis, rho_net_all((i - 1) * length(N_currents) + 1:(i - 1) * length(N_currents) + length(N_currents)), '-g*', 'DisplayName', 'net');
 end
+
 xlabel('bias [V] (jittered with increasing tube current)')
 ylabel('space charge density [e/cm^3]')
 box
 grid
 title(['space charge vs bias:' sensor_name])
-legend('dark','Xray','net')
+legend('dark', 'Xray', 'net')
 % set(gca, 'YScale', 'log')
 savefig([sensor_name '_space charge vs bias.fig'])
 
@@ -166,14 +181,14 @@ savefig([sensor_name '_space charge vs bias.fig'])
 % % set(gca, 'YScale', 'log')
 % savefig([sensor_name '_abs_space charge vs bias.fig'])
 %% save workspace
-filename=[sensor_name '_all_space_charge_mu_tau_h.mat'];
-save(filename,'rho_dark_all','rho_net_all','rho_Xray_all','mu_tau_h_all','sensor_name','N_bias','N_currents','Version')
+filename = [sensor_name '_all_space_charge_mu_tau_h.mat'];
+save(filename, 'rho_dark_all', 'rho_net_all', 'rho_Xray_all', 'mu_tau_h_all', 'sensor_name', 'N_bias', 'N_currents', 'Version')
 
 %--save to excel
-Voltage=P(:,1);
-TubeCurrent=P(:,2);
-outputtable=table(Voltage,TubeCurrent,rho_dark_all,rho_Xray_all,rho_net_all, mu_tau_h_all);
-filename=[sensor_name '_summary.xlsx'];
+Voltage = P(:, 1);
+TubeCurrent = P(:, 2);
+outputtable = table(Voltage, TubeCurrent, rho_dark_all, rho_Xray_all, rho_net_all, mu_tau_h_all);
+filename = [sensor_name '_summary.xlsx'];
 writetable(outputtable, filename);
 %--------modification history---------------------------------------------------
 % 2021-11-02 created by Yuxin
@@ -192,4 +207,4 @@ writetable(outputtable, filename);
 % (4) if calculated mu_tau_h is wrongly high, it is given NaN (0.01 before)
 % (5) figure location adjusted
 % 2022-10-25 modified by Yuxin, version 3.1 fixed figure and data saving for measurements with only dark condition
-% 2022-11-23 modified by Yuxin, version 3.2 fixed a bug 
+% 2022-11-23 modified by Yuxin, version 3.2 fixed a bug
