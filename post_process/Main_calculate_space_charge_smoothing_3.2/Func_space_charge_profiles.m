@@ -12,12 +12,12 @@ function [rho_net,rho_net_mean,rho_dark, rho_Xray,mu_tau_h,xx]=Func_space_charge
 %load data with selected bias and X-ray tube current into workspace
 Bias=num2str(bias);
 Current=num2str(current);
-string1=['*' Bias 'V_' Current 'mA' '*output.mat'];
+string1=['*_' Bias 'V_' Current 'mA' '*output.mat'];
 S = dir(fullfile(string1));
 load(S.name);
 Output_Xray=Output;
 
-string2=['*' Bias 'V_0mA' '*output.mat'];
+string2=['*_' Bias 'V_0mA' '*output.mat'];
 S = dir(fullfile(string2));
 load(S.name);
 Output_dark=Output;

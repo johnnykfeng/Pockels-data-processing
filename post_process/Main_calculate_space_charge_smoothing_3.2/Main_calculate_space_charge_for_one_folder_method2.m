@@ -32,7 +32,7 @@ mu_tau_h_all = NaN(N,1);
 % mu_tau_h_all2=NaN(N,1);
 Bias = num2str(P(1,1));
 Current = num2str(P(1,2));
-string1 = ['*' Bias 'V_' Current 'mA' '*output.mat'];
+string1 = ['*_' Bias 'V_' Current 'mA' '*output.mat'];
 S = dir(fullfile(string1));
 if size(S)>1
     fprintf(2,'Warning:there are more than 1 data set with the same bias and current');
@@ -56,9 +56,10 @@ for i = 1:N
         %         mu_tau_h_all2(i)=mu_tau_h2;
     else
         bias_str=num2str(P(i,1));
-        string2=['*' bias_str 'V_0mA' '*.mat'];
+        string2=['*_' bias_str 'V_0mA' '*.mat'];
         S = dir(fullfile(string2));
-        load(S.name);
+        % load(S.name);
+        load(S(1).name);
         Output_dark=Output;
 
         string3=['*calib*.mat'];
