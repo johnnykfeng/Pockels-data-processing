@@ -38,7 +38,8 @@ dlgtitle = 'Test information ';
 version = '5.2';
 % Dimensions for the input dialog box
 dims = [1, 35];
-answer = inputdlg(prompt, dlgtitle, dims);
+default_inputs = {'DXXXXXX', '18', '2'};
+answer = inputdlg(prompt, dlgtitle, dims, default_inputs);
 sensor_name = char(answer{1});
 N_char = answer{2};
 N = str2num(N_char);
