@@ -12,6 +12,7 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
     %   - Calib: struct containing variables for calibration
     %   - calib_status: boolean input for using pre-existing calibration
     % 
+    disp('hello ;p')
     calib_status = questdlg('Do you want to use existing calibration file?');
 
     if strcmp(calib_status, 'Yes')
@@ -132,32 +133,36 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             waitfor(msgbox(['Select the region of interest']));
             [points, y] = ginput(2);
             points = round(points);
+            
             region_left = points(1);
             Calib.rough_region_left = region_left;
+            I0(:, 1:region_left) = I0_background;
+            imagesc(I0)
+
             region_right = points(2);
             Calib.rough_region_right = region_right;
             I0(:, region_right:end) = I0_background;
             imagesc(I0)
-            I0(:, 1:region_left) = I0_background;
-            imagesc(I0)
 
             %%
             dimension = size(E_field_biased_corrected);
-            N0 = dimension(1);
-            L = dimension(2);
+            N0 = dimension(1);  % N0 = 696
+            L = dimension(2);  % L = 520
+
             %-----find threshold for judging signal
             I0_center = I0(round(N0 / 2), :);
             I0_center_smooth = movmean(I0_center, 20);
             thre = 1/4 * max(I0_center_smooth);
 
-            %--------------------------------------
-            % find edge
+            %% ---- Edge Finding -------
+            Edge_left = zeros(1, N0);  % initialize array 
+            Edge_right = zeros(1, N0);
             for i = 1:N0
-                Iline = I0(i, :);
+                Iline = I0(i, :);  % I0 per line
                 %             I_signal_rough=Iline(Iline>200);
                 I_signal_rough = Iline(Iline > thre);
                 Signal_median = median(I_signal_rough);
-                Th = Signal_median / 2; %threshold for judging a edge
+                Th = Signal_median / 2; % threshold for judging a edge
                 signal_range = find(Iline > Th);
 
                 if ~isempty(signal_range)
@@ -167,8 +172,17 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
                     Edge_left(i) = 1;
                     Edge_right(i) = L;
                 end
-
             end
+            Calib.Edge_left = Edge_left;
+            Calib.Edge_right = Edge_right;
+
+            Edge_left_fit = linear_fit_edge(Edge_left);
+            Edge_right_fit = linear_fit_edge(Edge_right);
+
+            Calib.Edge_left_fit = Edge_left_fit;
+            Calib.Edge_right_fit = Edge_right_fit;
+
+            show_edge_fit(Edge_left_fit, Edge_right_fit, N0, L, I0)
 
             % find outliers
             Edge_left_median = round(median(Edge_left));
@@ -178,6 +192,7 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             Calib.scale = sensor_thickness / T_median; %[mm/pixel] the corresponding thickness of one pixel
             outlier = find((abs(T - T_median) / T_median > 0.2) == 1);
 
+            E_int = zeros(1, N0);
             for i = 1:N0
                 Eline = E_field_biased_corrected(i, Edge_left(i):Edge_right(i));
                 x = (0:T(i)) / T(i) * sensor_thickness * 1E-3;
@@ -252,11 +267,40 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             xlabel('Distance (mm)')
             ylabel('E field (V/m)')
             box
+
             waitfor(msgbox(['Calibration done']));
-            close 5 6 7 8 9 10 11
+            % close 5 6 7 8 9 10 11;
+            close all;
             % close figure_parallel figure_crossed fig_select_ROI fig_select_ROI_b
         end
 
     end
 
 end
+
+function [linear_edge_array] = linear_fit_edge(edge_array)
+    x1 = 1:length(edge_array);
+    p = polyfit(x1, edge_array, 1);
+    linear_edge_array = round(polyval(p, x1));
+end
+
+function [] = show_edge_fit(edge_left, edge_right, dim1, dim2, I0)
+    % dim1 or N0= 696, dim2 or L = 520;
+    matrix = I0;
+    line_thickness = 4;
+    for i = 1:dim1
+        for j = 0:line_thickness
+            matrix(i, edge_left(i) - j) = 0;
+            matrix(i, edge_right(i) + j) = 0;
+        end
+    end
+    fig101 = figure('Name','Linear Edge Fit');
+    movegui(fig101, 'center')
+    imagesc(matrix);
+    colorbar;
+    colormap('Turbo');
+    title('thick black line show calculated edge')
+
+end
+
+% function [Output, Calib, calib_status] = Edge_finder(I0_parallel)

@@ -21,7 +21,7 @@ function [Output] = Read_Pockels_data_group_extraction(sensor_name, bias, X_ray_
 
     %% Matching and handling filenames
     %---------2022-09-08-new for Verson 3.0---------------------------------
-    filename_pattern = ['*' bias_string '*' flux_string '*.txt']; 
+    filename_pattern = ['*' bias_string '*' flux_string '*.txt'];
     file_match = dir(fullfile(filename_pattern)); % list of files that match filename_pattern
     duplicate = size(file_match); % duplicate should be 1 most of the time
 
@@ -34,12 +34,12 @@ function [Output] = Read_Pockels_data_group_extraction(sensor_name, bias, X_ray_
         end
         filename = file_match(namelength == min(namelength)).name;
 
-    else
+    else % not duplicate
         filename = file_match.name;
     end
 
     file_content = fileread(filename);
-    sensor_name = Output.sensor_name;
+    % sensor_name = Output.sensor_name;
 
     %% Parsing .txt file into matrix
     %---------2022-09-08-------------------------------------

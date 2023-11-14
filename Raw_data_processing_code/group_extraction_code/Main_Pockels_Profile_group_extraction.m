@@ -38,7 +38,8 @@ dlgtitle = 'Test information ';
 version = '5.2';
 % Dimensions for the input dialog box
 dims = [1, 35];
-answer = inputdlg(prompt, dlgtitle, dims);
+defaultanswer={'D390XXX','27', '2'};
+answer = inputdlg(prompt, dlgtitle, dims, defaultanswer);
 sensor_name = char(answer{1});
 N_char = answer{2};
 N = str2num(N_char);
@@ -53,7 +54,7 @@ parameter = importdata(filename);
 
 disp("Parameter file")
 disp("Bias(V)  X-ray(mA)")
-disp(parameter)
+% disp(parameter)
 
 %%
 % These coordinates only make sense on a large 1920 x 1080 screen
@@ -78,8 +79,7 @@ movegui(f4, [612, 66]);
 Integral_Efield_all=zeros(N,1);
 for i=1:N
     bias_string=num2str(parameter(i,1));
-    flux_string=num2str(parameter(i, ...
-        2));
+    flux_string=num2str(parameter(i,2));
 
     %%%%% Read the raw measurement data
     [Output] = Read_Pockels_data_group_extraction(sensor_name, parameter(i,1),parameter(i,2));
@@ -157,8 +157,8 @@ for i=1:N
     Dir = path_biased_crossed;
     save([Dir '\' Output.sensor_name '_' bias_string 'V_' flux_string 'mA_Pockels_output.mat'], 'Output');
     figure(f4)
-    savefig([Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_uncorrected'])
-    saveas(gcf,[Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_uncorrected'], 'png')
+    savefig([Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_corrected'])
+    saveas(gcf,[Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_corrected'], 'png')
     if strcmp(calib_status,'No')
         save([Dir '\' Output.sensor_name '_Pockels_calib_file.mat'], 'Calib');
     end
