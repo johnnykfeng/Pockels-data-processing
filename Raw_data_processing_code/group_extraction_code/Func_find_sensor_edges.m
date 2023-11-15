@@ -25,7 +25,7 @@ function [Edge_left, Edge_right] = Func_find_sensor_edges(I0)
     %   This function is designed for images where signals are represented by higher
     %   intensity values against a darker background. It may not work as intended for
     %   images with different characteristics.
-    disp('Calling Func_find_sensor_edges...')
+    % disp('Calling Func_find_sensor_edges...')
 
     dimension = size(I0);
     image_width = dimension(1); % 696
