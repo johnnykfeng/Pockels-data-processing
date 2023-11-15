@@ -1,6 +1,5 @@
 function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, sensor_thickness)
-    %% DOCSTRING
-    % Routine for calibration step of Pockels data analysis
+    %% CALIBRATION_INI Routine for calibration step of Pockels data analysis
     % 
     % Inputs:
     %   - parameter: 2 x N array of bias and x-ray currents used for measurements
@@ -31,29 +30,34 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             Calib.alpha = (sqrt(3) * pi * Calib.n_0^3 * Calib.r_41 * Calib.d) / (2 * Calib.lambda_0);
             % Calib is an output of the function, but I don't think it's useful
 
-            %% Input and plot 0V Parallel
-            waitfor(msgbox(['Select the 0V, parallel data']));
-            [file_0V_parallel, path_0V_parallel] = uigetfile('*.txt'); % the name of the file doesn't matter
-            disp([file_0V_parallel, path_0V_parallel])
-            Output.data_directory = path_0V_parallel;
+            % %% Input and plot 0V Parallel
+            % waitfor(msgbox(['Select the 0V, parallel data']));
+            % [file_0V_parallel, path_0V_parallel] = uigetfile('*.txt'); % the name of the file doesn't matter
+            % % disp([file_0V_parallel, path_0V_parallel])
+            % % Output.data_directory = path_0V_parallel;
 
-            buffer1 = fileread(char([path_0V_parallel file_0V_parallel]));
-            data1 = textscan(buffer1, '%f %f %f', 'headerlines', 19); % skip the first 19 header lines
-            I_parallel_nobias_matrix(:, 1) = data1{1, 1}; % Rows
-            I_parallel_nobias_matrix(:, 2) = data1{1, 2}; % Columns
-            I_parallel_nobias_matrix(:, 3) = data1{1, 3}; % Pixel Values
-            %[I_parallel_nobias_matrix(:,1) I_parallel_nobias_matrix(:,2) I_parallel_nobias_matrix(:,3)] = textread([path_0V_parallel  file_0V_parallel], '%f %f %f', 'headerlines', 19) ;
+            % buffer1 = fileread(char([path_0V_parallel file_0V_parallel]));
+            % data1 = textscan(buffer1, '%f %f %f', 'headerlines', 19); % skip the first 19 header lines
+            % I_parallel_nobias_matrix(:, 1) = data1{1, 1}; % Rows
+            % I_parallel_nobias_matrix(:, 2) = data1{1, 2}; % Columns
+            % I_parallel_nobias_matrix(:, 3) = data1{1, 3}; % Pixel Values
+            % %[I_parallel_nobias_matrix(:,1) I_parallel_nobias_matrix(:,2) I_parallel_nobias_matrix(:,3)] = textread([path_0V_parallel  file_0V_parallel], '%f %f %f', 'headerlines', 19) ;
 
-            I_parallel_nobias_field = reshape(I_parallel_nobias_matrix(:, 3), [696, 520]); % converts 1-D array to 2-D array of shape
+            % I_parallel_nobias_field = reshape(I_parallel_nobias_matrix(:, 3), [696, 520]); % converts 1-D array to 2-D array of shape
 
-            figure_parallel = figure('Name', '0V Parallel');
-            movegui([1184 575]);
-            imagesc(I_parallel_nobias_field)
-            title(['Intensity @ parallel polarizers'])
-            axes1 = gca;
-            set(axes1, 'DataAspectRatio', [1 1 1], 'Layer', 'top');
-            set(axes1, 'View', [-90 90]);
-            box
+            % figure_parallel = figure('Name', '0V Parallel');
+            % % figure('Name', '0V Parallel');
+            % movegui(figure_parallel, "northeast")
+            % % movegui([1184 575]);
+            % imagesc(I_parallel_nobias_field)
+            % title(['Intensity @ parallel polarizers'])
+            % axes1 = gca;
+            % set(axes1, 'DataAspectRatio', [1 1 1], 'Layer', 'top');
+            % set(axes1, 'View', [-90 90]);
+            % box
+
+            I_parallel_nobias_field = Func_load_plot_calibration_data('Select the 0V, parallel data', '0V Parallel', 'northeast');
+
 
             %% Input and plot 0V Crossed
             waitfor(msgbox(['Select the 0V, crossed data']));
@@ -69,7 +73,8 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             I_crossed_nobias_field = reshape(I_crossed_nobias_matrix(:, 3), [696, 520]);
 
             figure_crossed = figure('Name', '0V Crossed');
-            movegui([1184 66]);
+            movegui(figure_crossed, "southeast")
+            % movegui([1184 66]);
             imagesc(I_crossed_nobias_field)
             title(['Intensity @ crossed polarizers'])
             axes1 = gca;
@@ -145,44 +150,22 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             imagesc(I0)
 
             %%
-            dimension = size(E_field_biased_corrected);
-            N0 = dimension(1);  % N0 = 696
-            L = dimension(2);  % L = 520
+            % dimension = size(E_field_biased_corrected);
+            dimension = size(I0);
+            image_width = dimension(1);  % 696
+            image_length = dimension(2);  % 520
 
-            %-----find threshold for judging signal
-            I0_center = I0(round(N0 / 2), :);
-            I0_center_smooth = movmean(I0_center, 20);
-            thre = 1/4 * max(I0_center_smooth);
-
-            %% ---- Edge Finding -------
-            Edge_left = zeros(1, N0);  % initialize array 
-            Edge_right = zeros(1, N0);
-            for i = 1:N0
-                Iline = I0(i, :);  % I0 per line
-                %             I_signal_rough=Iline(Iline>200);
-                I_signal_rough = Iline(Iline > thre);
-                Signal_median = median(I_signal_rough);
-                Th = Signal_median / 2; % threshold for judging a edge
-                signal_range = find(Iline > Th);
-
-                if ~isempty(signal_range)
-                    Edge_left(i) = signal_range(1);
-                    Edge_right(i) = signal_range(end);
-                else
-                    Edge_left(i) = 1;
-                    Edge_right(i) = L;
-                end
-            end
+            [Edge_left, Edge_right] = Func_find_sensor_edges(I0);
             Calib.Edge_left = Edge_left;
             Calib.Edge_right = Edge_right;
 
-            Edge_left_fit = linear_fit_edge(Edge_left);
-            Edge_right_fit = linear_fit_edge(Edge_right);
+            Edge_left_fit = Func_linear_fit_edge(Edge_left);
+            Edge_right_fit = Func_linear_fit_edge(Edge_right);
 
             Calib.Edge_left_fit = Edge_left_fit;
             Calib.Edge_right_fit = Edge_right_fit;
 
-            show_edge_fit(Edge_left_fit, Edge_right_fit, N0, L, I0)
+            Func_show_edge_fit(Edge_left_fit, Edge_right_fit, I0)
 
             % find outliers
             Edge_left_median = round(median(Edge_left));
@@ -192,8 +175,8 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             Calib.scale = sensor_thickness / T_median; %[mm/pixel] the corresponding thickness of one pixel
             outlier = find((abs(T - T_median) / T_median > 0.2) == 1);
 
-            E_int = zeros(1, N0);
-            for i = 1:N0
+            E_int = zeros(1, image_width);
+            for i = 1:image_width
                 Eline = E_field_biased_corrected(i, Edge_left(i):Edge_right(i));
                 x = (0:T(i)) / T(i) * sensor_thickness * 1E-3;
                 E_int(i) = trapz(x, Eline);
@@ -233,7 +216,7 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             E_integral_selected = trapz(xs, E_profile_selected(Edge_left_sel_median:Edge_right_sel_median)); %integral of E-field in the seleteced region
             Output.integral_Efield = E_integral_selected;
 
-            x_all = [1:L] * (xs(2) - xs(1)) * 1e3; %[mm]
+            x_all = [1:image_length] * (xs(2) - xs(1)) * 1e3; %[mm]
             Calib.x_sensor = (0:(Edge_right_median - Edge_left_median)) / T_sel_median * sensor_thickness; %[mm]
             Calib.x_all = x_all; %[mm]
             %         Calib.xs=xs;
@@ -278,20 +261,127 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
 
 end
 
-function [linear_edge_array] = linear_fit_edge(edge_array)
+
+function [I_calibration_field] = Func_load_plot_calibration_data(prompt_message, figure_name, figure_pos)
+    %FUNC_LOAD_PLOT_CALIBRATION_DATA Loads and plots 0V parallel or crossed data from a file.
+    
+    % Prompt user to select the 0V parallel data file
+    waitfor(msgbox(prompt_message));
+    [file, path] = uigetfile('*.txt'); % the name of the file doesn't matter
+
+    % Read data from the selected file
+    buffer1 = fileread(char([path file]));
+    data1 = textscan(buffer1, '%f %f %f', 'headerlines', 19); % skip the first 19 header lines
+    I_nobias_matrix(:, 1) = data1{1, 1}; % Rows
+    I_nobias_matrix(:, 2) = data1{1, 2}; % Columns
+    I_nobias_matrix(:, 3) = data1{1, 3}; % Pixel Values
+
+    % Reshape the data into a 2D matrix
+    I_calibration_field = reshape(I_nobias_matrix(:, 3), [696, 520]); % converts 1-D array to 2-D array of shape
+
+    % Plot the data
+    figure_calib = figure('Name', figure_name);
+    movegui(figure_calib, figure_pos)
+    imagesc(I_calibration_field)
+    title(figure_name)
+    axes1 = gca;
+    set(axes1, 'DataAspectRatio', [1 1 1], 'Layer', 'top');
+    set(axes1, 'View', [-90 90]);
+    box
+end
+
+
+
+function [Edge_left, Edge_right] = Func_find_sensor_edges(I0)
+    %FUNC_FIND_SENSOR_EDGES Detects the left and right edges of signals in an image.
+    %
+    % Inputs:
+    %   I0: A 2D matrix representing the input image. The matrix elements are 
+    %       expected to be intensity values of the image.
+    %
+    % Outputs:
+    %   Edge_left: 1D array indicating left edge positions of signals per row.
+    %   Edge_right: 1D array indicating right edge positions of signals per row.  
+    %
+    % Algorithm:
+    %   1. Determine the size of the input image and extract the center row.
+    %   2. Smooth the center row using a moving mean filter with a window size of 20.
+    %   3. Set the signal detection threshold to one-fourth of the maximum value 
+    %      in the smoothed center row.
+    %   4. For each row in the image:
+    %       a. Find intensity values above the threshold.
+    %       b. Determine the median of these values and set a new threshold to half of this median.
+    %       c. Find the range in the row where intensity values exceed this new threshold.
+    %       d. Record the start and end indices of this range as the left and right edges.
+    %   5. If no signal is detected in a row, default the edges to the start and end of the row.
+    %
+    % Note:
+    %   This function is designed for images where signals are represented by higher
+    %   intensity values against a darker background. It may not work as intended for 
+    %   images with different characteristics.
+    disp('Calling Func_find_sensor_edges...')
+
+    dimension = size(I0);
+    image_width = dimension(1);  % 696
+    image_length = dimension(2);  % 520
+
+    %----- threshold for judging signal
+    I0_center = I0(round(image_width / 2), :);
+    I0_center_smooth = movmean(I0_center, 20);
+    threshold = 1/4 * max(I0_center_smooth);
+    
+    % initialize array
+    Edge_left = zeros(1, image_width); 
+    Edge_right = zeros(1, image_width);
+    for i = 1:image_width
+        Iline = I0(i, :);  % I0 per line
+        I_signal_rough = Iline(Iline > threshold);
+        Signal_median = median(I_signal_rough);
+        Th = Signal_median / 2; % threshold for judging a edge
+        signal_range = find(Iline > Th);
+
+        if ~isempty(signal_range)
+            Edge_left(i) = signal_range(1);
+            Edge_right(i) = signal_range(end);
+        else
+            Edge_left(i) = 1;
+            Edge_right(i) = image_length;
+        end
+    end
+end
+
+
+function [linear_edge_array] = Func_linear_fit_edge(edge_array)
+    %FUNC_LINEAR_FIT_EDGE Applies a linear fit to an edge array.
+    %
+    % Inputs:
+    %   edge_array: A 1D array containing edge positions.
+    %
+    % Outputs:
+    %   linear_edge_array: A 1D array of the same length as `edge_array`, 
+    %                      containing the linearly fitted edge values.
+
     x1 = 1:length(edge_array);
     p = polyfit(x1, edge_array, 1);
     linear_edge_array = round(polyval(p, x1));
 end
 
-function [] = show_edge_fit(edge_left, edge_right, dim1, dim2, I0)
-    % dim1 or N0= 696, dim2 or L = 520;
+function [] = Func_show_edge_fit(Edge_left, Edge_right, I0)
+    %FUNC_SHOW_EDGE_FIT Plots the input image and the calculated 
+    % edges as a thick black line
+    %
+    % Inputs:
+    %   Edge_left: A 1D array containing the left edge positions for each row.
+    %   Edge_right: A 1D array containing the right edge positions for each row.
+    %   I0: A 2D matrix representing the input image. 
+    dimensions = size(I0);
+    image_width = dimensions(1);
     matrix = I0;
     line_thickness = 4;
-    for i = 1:dim1
+    for i = 1:image_width
         for j = 0:line_thickness
-            matrix(i, edge_left(i) - j) = 0;
-            matrix(i, edge_right(i) + j) = 0;
+            matrix(i, Edge_left(i) - j) = 0;
+            matrix(i, Edge_right(i) + j) = 0;
         end
     end
     fig101 = figure('Name','Linear Edge Fit');

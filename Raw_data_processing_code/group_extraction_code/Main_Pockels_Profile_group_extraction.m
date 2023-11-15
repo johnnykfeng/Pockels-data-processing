@@ -86,13 +86,14 @@ for i=1:N
     %%%%% Calculates the E-field
     [Output, Calib] = Calculate_Efield(Output, Calib);
 
-    figure(f1)
+    % figure(f1);
+    figure(1);
     plot(Calib.x_all-Calib.x_all(Calib.cathode),Output.E_cross_section_average_corrected,'displayname',[bias_string 'V,' flux_string 'mA']);
     title(['Pockels average profile sensor-' Output.sensor_name '@' bias_string 'V,' flux_string 'mA'])
     xlabel('Cathode to anode distance (mm)')
     ylabel('E field (V/m)')
 
-    figure(f2)
+    figure(f2);
     title(['Pockels average profile sensor-' Output.sensor_name])
     xlabel('Cathode to anode distance (mm)')
     ylabel('E field (100V/mm)')
@@ -103,7 +104,7 @@ for i=1:N
     Integral_Efield_all(i) = Output.integral_Efield;
     %     end
 
-    figure(f4)
+    figure(f4);
     imagesc(Output.E_field_biased_corrected)
     E_ave=parameter(i,1)/sensor_thickness*1E3;
     E_max=E_ave*1.7;
@@ -123,7 +124,7 @@ for i=1:N
             'displayname',[bias_string 'V,' flux_string 'mA']);
         box
 
-        figure(f3)
+        figure(f3);
         % plot with circles 'o'
         plot(Output.bias, Output.integral_Efield, ...
             'o','displayname',[bias_string 'V,' flux_string 'mA']);
@@ -139,7 +140,7 @@ for i=1:N
             '--', 'displayname', [bias_string 'V,' flux_string 'mA']);
         box
 
-        figure(f3)
+        figure(f3);
         % plot with squares 's'
         plot(Output.bias, Output.integral_Efield, ...
             's','displayname',[bias_string 'V,' flux_string 'mA']);
