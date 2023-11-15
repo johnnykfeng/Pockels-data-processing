@@ -17,6 +17,15 @@
 N0 = dimension(1); 
 L = dimension(2);
 
+- One possible reason for inconsistent results is that ROI for calibration is hand-selected, which is open to interpretation by the user...
 
+
+## Calculate_Efield.m
+
+- Seems like a very important function that does performs distortion correction and Efield calculation
+
+- How is Efield calculated in general? Efield profile is proportional to the intensity of each pixel
+The integrated Efield is in units of V.
+Efield is usually plot in 1-D, so the pixels must be summed or averaged across the line profile
 
 

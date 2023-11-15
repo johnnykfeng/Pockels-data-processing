@@ -56,42 +56,39 @@ function [image_corrected, Edge_cathode_fit, Edge_anode_fit] = Func_distortion_c
     I0_background = min(min(I0));
     region_left = Calib.rough_region_left;
     region_right = Calib.rough_region_right;
-    % I0(:,region_right:end)=I0_background;
     I0(:, region_right:end) = NaN;
-    % imagesc(I0)
-    % I0(:,1:region_left)=I0_background;
     I0(:, 1:region_left) = NaN;
-    % imagesc(I0)
 
-    dimention = size(I0);
-    N = dimention(1);
-    L = dimention(2);
-    % define threthold of signal in I0
-    [counts, edges] = histcounts(I0, 50);
-    I0_peak = edges(counts == max(counts(10:end)));
-    Threth_I0 = I0_peak / 4;
-    %----------
-    for i = 1:N
-        Iline = I0(i, :);
-        I_signal_rough = Iline(Iline > Threth_I0);
-        Signal_median = median(I_signal_rough);
-        Th = Signal_median / 2; %threshold for judging a edge
-        signal_range = find(Iline > Th);
+    [Edge_cathode, Edge_anode] = Func_find_sensor_edges(I0);
+    % dimention = size(I0);
+    % N = dimention(1);
+    % L = dimention(2);
+    % % define threthold of signal in I0
+    % [counts, edges] = histcounts(I0, 50);
+    % I0_peak = edges(counts == max(counts(10:end)));
+    % Threth_I0 = I0_peak / 4;
+    % %----------
+    % for i = 1:N
+    %     Iline = I0(i, :);
+    %     I_signal_rough = Iline(Iline > Threth_I0);
+    %     Signal_median = median(I_signal_rough);
+    %     Th = Signal_median / 2; %threshold for judging a edge
+    %     signal_range = find(Iline > Th);
 
-        if ~isempty(signal_range)
-            Edge_cathode(i) = signal_range(1);
-            Edge_anode(i) = signal_range(end);
-            Iline(1:Edge_cathode(i) - 1) = NaN;
-            Iline(Edge_anode(i):L) = NaN;
-            I0(i, :) = Iline;
-        else
-            Edge_cathode(i) = 1;
-            Edge_anode(i) = L;
-            Iline = NaN;
-            I0(i, :) = Iline;
-        end
+    %     if ~isempty(signal_range)
+    %         Edge_cathode(i) = signal_range(1);
+    %         Edge_anode(i) = signal_range(end);
+    %         Iline(1:Edge_cathode(i) - 1) = NaN;
+    %         Iline(Edge_anode(i):L) = NaN;
+    %         I0(i, :) = Iline;
+    %     else
+    %         Edge_cathode(i) = 1;
+    %         Edge_anode(i) = L;
+    %         Iline = NaN;
+    %         I0(i, :) = Iline;
+    %     end
 
-    end
+    % end
 
     % smooth edges
     [M, N] = size(I0);
