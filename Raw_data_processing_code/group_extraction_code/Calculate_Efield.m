@@ -10,19 +10,18 @@ function [Output, Calib] = Calculate_Efield(Output, Calib)
     I_over_I0(I_over_I0 > 1) = 1;
     %-added 2022-11-07------
     I_over_I0(I_over_I0 <- 1)=-1;
-    NN = size(Nom3);
+    NN = size(Nom3);    
+
+    % separate positive and negative intensity values
     I_pos = zeros(NN(1), NN(2));
     I_neg = zeros(NN(1), NN(2));
-
-    A3 = I_over_I0 >= 0;
-    I_pos(A3) = I_over_I0(A3);
-    A3 = I_over_I0 < 0;
-    I_neg(A3) = I_over_I0(A3);
+    positive_index = I_over_I0 >= 0;
+    I_pos(positive_index) = I_over_I0(positive_index);
+    negative_index = I_over_I0 < 0;
+    I_neg(negative_index) = I_over_I0(negative_index);
 
     E_pos = (1 / Calib.alpha) * (asin(sqrt(I_pos)));
-
     E_neg= -(1 / Calib.alpha) * (asin(sqrt(abs(I_neg))));
-
     E_biased_raw = E_pos + E_neg;
 
     % image distortion correction 2023-01-03

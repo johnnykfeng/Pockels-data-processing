@@ -28,4 +28,10 @@ L = dimension(2);
 The integrated Efield is in units of V.
 Efield is usually plot in 1-D, so the pixels must be summed or averaged across the line profile
 
+- There is a difference between Intensity of image and E-field profile, the naming of variables have it confused sometimes
 
+- Try and understand Func_distortion_correction.m, it does the main edge correction, but not sure if it's correct
+
+- Calculate_Efield ...
+
+- Why not apply distortion_correction on all the images rather than the Efield ???

@@ -208,9 +208,8 @@ function [Output, Calib, calib_status] = calibration_ini(parameter, sensor_name,
             box
 
             waitfor(msgbox(['Calibration done']));
-            close 5 6 7 8 9 10 11;
-            % close all;
-            % close figure_parallel figure_crossed fig_select_ROI fig_select_ROI_b
+            % close 5 6 7 8 9 10 11;
+            close all;
         end
 
     end

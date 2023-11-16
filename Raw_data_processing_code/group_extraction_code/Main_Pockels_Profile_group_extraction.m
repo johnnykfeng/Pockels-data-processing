@@ -28,7 +28,7 @@
 % the workspace.
 %-------------------------------------------------------------------------
 %%
-warning('off','all') % not recommended
+warning('off', 'all') % not recommended
 clear
 close all
 prompt = {'Enter sensor name', 'Number of conditions to be extracted', 'Sensor thickness [mm]'};
@@ -38,7 +38,7 @@ dlgtitle = 'Test information ';
 version = '5.2';
 % Dimensions for the input dialog box
 dims = [1, 35];
-defaultanswer={'D390XXX','27', '2'};
+defaultanswer = {'D390XXX', '27', '2'};
 answer = inputdlg(prompt, dlgtitle, dims, defaultanswer);
 sensor_name = char(answer{1});
 N_char = answer{2};
@@ -56,6 +56,12 @@ disp("Parameter file")
 disp("Bias(V)  X-ray(mA)")
 % disp(parameter)
 
+%% Calibration
+% read calibration_ini, it's does a lot of things
+[Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, sensor_thickness);
+%% process raw data of each measurement conditio
+
+
 %%
 % These coordinates only make sense on a large 1920 x 1080 screen
 f1 = figure('Name', 'Pockels average E-field profile per data');
@@ -65,30 +71,32 @@ f3 = figure('Name', 'Integrated E-field vs Bias');
 plot([0, 1000], [0, 1000], 'k--')
 hold on
 f4 = figure('Name', 'Pockels Image Data');
+colormap("jet");
 
 movegui(f1, [40, 575]);
 movegui(f2, [612, 575]);
 movegui(f3, [40, 66]);
 movegui(f4, [612, 66]);
 
-%% Calibration
-% read calibration_ini, it's does a lot of things
-[Output, Calib, calib_status] = calibration_ini(parameter, sensor_name, sensor_thickness);
-%% process raw data of each measurement condition
+Integral_Efield_all = zeros(N, 1);
+cmap = colormap(jet(N));
 
-Integral_Efield_all=zeros(N,1);
-for i=1:N
-    bias_string=num2str(parameter(i,1));
-    flux_string=num2str(parameter(i,2));
+for i = 1:N
+    bias_string = num2str(parameter(i, 1));
+    flux_string = num2str(parameter(i, 2));
 
     %%%%% Read the raw measurement data
-    [Output] = Read_Pockels_data_group_extraction(sensor_name, parameter(i,1),parameter(i,2));
+    [Output] = Read_Pockels_data_group_extraction(sensor_name, parameter(i, 1), parameter(i, 2));
     %%%%% Calculates the E-field
     [Output, Calib] = Calculate_Efield(Output, Calib);
 
+    % color index for pretty plotting
+    colorIdx = round(1 + (size(cmap, 1) - 1) * (i - 1) / (N - 1));
+
     % figure(f1);
     figure(1);
-    plot(Calib.x_all-Calib.x_all(Calib.cathode),Output.E_cross_section_average_corrected,'displayname',[bias_string 'V,' flux_string 'mA']);
+    plot(Calib.x_all - Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected, ...
+        'displayname', [bias_string 'V,' flux_string 'mA'], 'Color', cmap(colorIdx, :));
     title(['Pockels average profile sensor-' Output.sensor_name '@' bias_string 'V,' flux_string 'mA'])
     xlabel('Cathode to anode distance (mm)')
     ylabel('E field (V/m)')
@@ -98,52 +106,54 @@ for i=1:N
     xlabel('Cathode to anode distance (mm)')
     ylabel('E field (100V/mm)')
 
-    y = Output.E_cross_section_average_corrected(round(Calib.cathode): round(Calib.anode));
+    y = Output.E_cross_section_average_corrected(round(Calib.cathode):round(Calib.anode));
     y(isnan(y)) = 0;
-    Output.integral_Efield = trapz(Calib.x_sensor*1e-3, y);
+    Output.integral_Efield = trapz(Calib.x_sensor * 1e-3, y);
     Integral_Efield_all(i) = Output.integral_Efield;
     %     end
 
     figure(f4);
     imagesc(Output.E_field_biased_corrected)
-    E_ave=parameter(i,1)/sensor_thickness*1E3;
-    E_max=E_ave*1.7;
-    clim([0,E_max])
+    E_ave = parameter(i, 1) / sensor_thickness * 1E3;
+    E_max = E_ave * 1.7;
+    clim([0, E_max])
     title(['Corrected E-field for sensor-' Output.sensor_name ' @ ' bias_string 'V, ' flux_string 'mA'])
     xlabel('x-pixel')
     ylabel('y-pixel')
-    axes1=gca;
-    set(axes1,'DataAspectRatio',[1 1 1],'Layer','top');
-    set(axes1,'View',[-90 90]);
+    axes1 = gca;
+    set(axes1, 'DataAspectRatio', [1 1 1], 'Layer', 'top');
+    set(axes1, 'View', [-90 90]);
     colorbar
     box
-    
+
     if Output.flux > 0 % for non dark current
         figure(f2)
-        plot(Calib.x_all-Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected*1e-5, ...
-            'displayname',[bias_string 'V,' flux_string 'mA']);
+        plot(Calib.x_all - Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected * 1e-5, ...
+            'displayname', [bias_string 'V,' flux_string 'mA'], 'Color', cmap(colorIdx, :));
         box
 
         figure(f3);
         % plot with circles 'o'
         plot(Output.bias, Output.integral_Efield, ...
-            'o','displayname',[bias_string 'V,' flux_string 'mA']);
+            'o', 'displayname', [bias_string 'V,' flux_string 'mA'], ...
+            'Color', cmap(colorIdx, :));
         title(['Integral E-field sensor-' Output.sensor_name])
         xlabel('Bias (V)')
         ylabel('Integral E-field (V)')
         box
 
-    else  % Dark current plots
+    else % Dark current plots
         figure(f2)
         % plot dark current with '--'
-        plot(Calib.x_all-Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected*1e-5, ...
-            '--', 'displayname', [bias_string 'V,' flux_string 'mA']);
+        plot(Calib.x_all - Calib.x_all(Calib.cathode), Output.E_cross_section_average_corrected * 1e-5, ...
+            '--', 'displayname', [bias_string 'V,' flux_string 'mA'], 'Color', cmap(colorIdx, :));
         box
 
         figure(f3);
         % plot with squares 's'
         plot(Output.bias, Output.integral_Efield, ...
-            's','displayname',[bias_string 'V,' flux_string 'mA']);
+            's', 'displayname', [bias_string 'V,' flux_string 'mA'], ...
+            'Color', cmap(colorIdx, :));
         title(['Integral E-field sensor-' Output.sensor_name])
         xlabel('Bias (V)')
         ylabel('Integral E-field (V)')
@@ -159,63 +169,69 @@ for i=1:N
     save([Dir '\' Output.sensor_name '_' bias_string 'V_' flux_string 'mA_Pockels_output.mat'], 'Output');
     figure(f4)
     savefig([Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_corrected'])
-    saveas(gcf,[Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_corrected'], 'png')
-    if strcmp(calib_status,'No')
+    saveas(gcf, [Output.sensor_name '_' bias_string 'V_' flux_string 'mA_E-field_corrected'], 'png')
+
+    if strcmp(calib_status, 'No')
         save([Dir '\' Output.sensor_name '_Pockels_calib_file.mat'], 'Calib');
     end
-    calib_status='yes';
+
+    calib_status = 'yes';
 end
 
 %% --judge integrated E-field-----------
-if N>2
-    bias_all=unique(parameter(:,1));
-    Int_E_dark=Integral_Efield_all(parameter(:,2)==0);
+if N > 2
+    bias_all = unique(parameter(:, 1));
+    Int_E_dark = Integral_Efield_all(parameter(:, 2) == 0);
 
-    bias_500=bias_all(bias_all>=500);
-    Int_E_dark_500=Int_E_dark(bias_all>=500);
+    bias_500 = bias_all(bias_all >= 500);
+    Int_E_dark_500 = Int_E_dark(bias_all >= 500);
 
     fitResults = polyfit(bias_500, Int_E_dark_500, 1);
     slope = fitResults(1)
-    deviation = (slope-1);
-    if abs(deviation)>0.3
-        fprintf(2,'Warning:the integral of E-field poorly matches bias, a better calibration may be needed');
+    deviation = (slope - 1);
+
+    if abs(deviation) > 0.3
+        fprintf(2, 'Warning:the integral of E-field poorly matches bias, a better calibration may be needed');
     end
+
 else
-    deviation=0;
+    deviation = 0;
 end
+
 save([Dir '\' Output.sensor_name '_integral_E_field.mat'], 'Integral_Efield_all');
 
 %% --------------------------------------
 
 figure(f2)
 savefig([Output.sensor_name '_all_E_field_profiles'])
-saveas(gcf,[Output.sensor_name '_all_E_field_profiles'], 'png')
+saveas(gcf, [Output.sensor_name '_all_E_field_profiles'], 'png')
 figure(f3)
 savefig([Output.sensor_name '_Integral_E_field_vs_bias'])
-saveas(gcf,[Output.sensor_name '_Integral_E_field_vs_bias'], 'png')
+saveas(gcf, [Output.sensor_name '_Integral_E_field_vs_bias'], 'png')
 figure(f1)
 hold off
 figure(f2)
 hold off
 figure(f3)
 hold off
-if abs(deviation)>0.3
+
+if abs(deviation) > 0.3
     waitfor(msgbox(['Process is complete. The integral of E-field poorly matches bias, a better calibration may be needed']));
 else
-waitfor(msgbox(['Process is complete']));
+    waitfor(msgbox(['Process is complete']));
 end
 
 % clearvars -except Output f1 f2 f3 f4 Calib slope parameter
 
 %% Revision history
-%2023-08-23 Version 5.2 by Yuxin. Corrected the parameters in the Pockels equation and the calculation of r41, in calibration_ini.m 
+%2023-08-23 Version 5.2 by Yuxin. Corrected the parameters in the Pockels equation and the calculation of r41, in calibration_ini.m
 %2023-01-27 Version 5.1 by Yuxin. the colrmap range in Fig.4 E-field map is
 % made adjusted automatically based on the bias.
 %2023-01-03 Version 5.0 by Yuxin. image distortion is corrected for
 %calculated E-field. by function:Func_find_sensor_edges_and_distortion_correction.m inside Calculate_Efield.m
 %(I_over_I0 is not stored in Output anymore.)
-%2022-11-07 Version 4.0 by Yuxin. allows negative E-field in the calculation 
-% to tolarent noise in low field region and thus removes the fake above zero 
+%2022-11-07 Version 4.0 by Yuxin. allows negative E-field in the calculation
+% to tolarent noise in low field region and thus removes the fake above zero
 % E-field in the zero field region. Modifications are in "Calculate_Efield.m"
 %2022-09-26 Version 3.1 by Yuxin. Add lines to skip broken data.
 %2022-09-08 Version 3.0 by Yuxin. Automatically load all measurements.
